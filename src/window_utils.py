@@ -41,16 +41,14 @@ class winMouseControl:
         if event == cv2.EVENT_LBUTTONUP:
             self.flag = 0
             self.done = 1
-            self.buttonUpX, self.buttonUpY = x, y
-
-            print((self.buttonDownX, self.buttonDownY, self.buttonUpX, self.buttonUpY))
+            self.buttonUpX, self.buttonUpY = x, y           
 
         if event == cv2.EVENT_MOUSEMOVE:
             # when left button press down 
             if self.flag == 1 and self.done == 0:
                 self.temp = np.copy(self.frame)
-                # Draw the red rectangle if the left mouse press down
-                cv2.rectangle(self.temp, (self.buttonDownX, self.buttonDownY), (x, y), (0, 0, 255))
+                # Draw the red line if the left mouse press down
+                cv2.line(self.temp, (self.buttonDownX, self.buttonDownY), (x, y), (0, 0, 255), 2)
 
     def setFrame(self, frame):
         # Original frame

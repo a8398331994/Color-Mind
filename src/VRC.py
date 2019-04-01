@@ -1,6 +1,7 @@
 import argparse, os
 import cv2
 from Mog2 import Mog2MotionDetector
+from objectTracker import objectTracker
 from window_utils import winMouseControl
 
 def argparses():
@@ -29,15 +30,19 @@ def main():
     # Get the argv and argc value
     args = argparses()
 
+    # parameter
     winMCSize = (640, 480)
     winMCName = "ROI"
+
     capExposureValue = -4.0
     capAutoFocus = 0
+
     frameWindowName = "Result"
+    foregroundMaskWindowName = "Foreground Mask"
     maxObjectAreaThreshRatio = 0.5
     minObjectArea = 200
     mogBackGroundRatio = 0.5
-
+    mogMotionDetectorThreshold = 0.8
 
     # Get the video capture
     cap = cv2.VideoCapture(0) 
@@ -61,11 +66,13 @@ def main():
 
     cv2.namedWindow(frameWindowName)
     # Init the mog2 foreground object class
-    Mog2 = Mog2MotionDetector(mogBackGroundRatio)
+    Mog2 = Mog2MotionDetector(mogBackGroundRatio, mogMotionDetectorThreshold)
+    # Init the objectTracker object class
+    objTracker = objectTracker()
+    
 
     while True:
         _, frame = cap.read()
-        
         
         foreground, err = Mog2.mse(frame)
         foregroundObject = Mog2.findForegroundObject(foreground, minObjectArea, maxObjectAreaThreshRatio)
@@ -73,14 +80,14 @@ def main():
         for obj in foregroundObject:
             cv2.rectangle(frame, (obj[0], obj[1]), (obj[0] + obj[2], obj[1] + obj[3]), (0, 0, 255), 2)
 
-
         # Draw the analysis region 
-        cv2.rectangle(frame, selectROI[:2], selectROI[2:], (0, 255, 0), 2)        
+        cv2.line(frame, selectROI[:2], selectROI[2:], (0, 255, 0), 2)    
+        cv2.imshow(foregroundMaskWindowName, foreground)    
         cv2.imshow(frameWindowName, frame)   
 
+        # objTracker.updateStatement()
         
         if cv2.waitKey(1) == 27:
             break
-    
-    
+
 main()

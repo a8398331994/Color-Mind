@@ -4,12 +4,17 @@ import numpy as np
 # ref: https://www.programcreek.com/python/example/89404/cv2.createBackgroundSubtractorMOG2
 # ref: https://docs.opencv.org/3.4.1/d7/d7b/classcv_1_1BackgroundSubtractorMOG2.html#ab8bdfc9c318650aed53ecc836667b56a
 class Mog2MotionDetector:
-    def __init__(self, backGroundRatio = 0.8):
+    def __init__(self, backGroundRatio = 0.8, threshRatio = 0.8):
         '''
-        Mog class construction
+        Mog class construction.
+        The `backGroundRatio is the ratio to update the background object.
+        The `threshRatio` is the threshold ratio to check if it is motion or not.
         '''
         #Init the color detector object
         self.fgbg = cv2.createBackgroundSubtractorMOG2()
+
+        # calculate the threshold value
+        self.threshValue = 255 * threshRatio
 
         # preprocess kernel init
         self.kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
@@ -18,13 +23,13 @@ class Mog2MotionDetector:
         # it's considered background and added to the model as a center of a new component. It corresponds to TB parameter in the paper.
         self.fgbg.setBackgroundRatio(backGroundRatio)
     
-    def mse(self, image, thresh = 225, err_Threshold = 2):
+    def mse(self, image, errThreshold = 2):
         '''
         The 'Mean Squared Error' between the two images is the
         sum of the squared difference between the two images;
         NOTE: the two images must have the same dimension.
-        The `image` is the inputarray which it want to track motion.
-        The `thresh` is the threshold which
+        The `image` is the inputarray which it want to track motion.       
+        The `errThreshold` is the ratio to mutilply the err value
         '''
 
         grayimg = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
@@ -32,9 +37,9 @@ class Mog2MotionDetector:
 
         # use opening phology process to refine the fgmask
         fgmask_open = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, self.kernel)       
-
-        ret, thresh_img = cv2.threshold(fgmask, thresh, 255, cv2.THRESH_BINARY)
-        err = np.sum((thresh_img.astype("float"))**err_Threshold)
+        
+        ret, thresh_img = cv2.threshold(fgmask, self.threshValue, 255, cv2.THRESH_BINARY)
+        err = np.sum((thresh_img.astype("float")) ** errThreshold)
         err /= float(thresh_img.shape[0] * thresh_img.shape[1])
         # return the MSE, the lower the error, the more "similar"
         # the two images are
@@ -81,9 +86,9 @@ class Mog2MotionDetector:
                     if (maxInformation[0] < rect[0] and maxInformation[1] < rect[1]):
                         if (maxInformation[0] + maxInformation[2] > rect[0] + rect[2] and maxInformation[1] + maxInformation[3] > rect[1] + rect[3]):
                             deleteIndex.append(index)
+
                 foregroundInformation = np.delete(foregroundInformation, deleteIndex, axis=0)
                 
-
         return forgroundObject
 
     def __explicit(self, l):
